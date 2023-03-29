@@ -1,6 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>gitlab内网屏蔽配置</title>
+    <url>/2023/03/29/gitlab%E5%86%85%E7%BD%91%E5%B1%8F%E8%94%BD%E9%85%8D%E7%BD%AE/</url>
+    <content><![CDATA[<p>从gitlab12.2版本开始,默认会屏蔽内网网段,这就会导致配置webhook或者导入内网的git仓库失败.需要手动打开</p>
+<span id="more"></span>
+
+<h3 id="1-配置"><a href="#1-配置" class="headerlink" title="1.配置"></a>1.配置</h3><p><img data-src="/images/gitlab%E5%86%85%E7%BD%91%E5%B1%8F%E8%94%BD%E9%85%8D%E7%BD%AE.jpg" alt="页面配置"><br>这里勾选上打开就行了.</p>
+<p>很简单吧,但是遇到个问题,在某些小版本,修改这个配置直接报错500 未知错误了.</p>
+<p>这时候我们看一下日志</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Completed 500 Internal Server Error in 17ms (ActiveRecord: 2.2ms)</span><br><span class="line"></span><br><span class="line">OpenSSL::Cipher::CipherError ():</span><br><span class="line"></span><br><span class="line">lib/gitlab/crypto_helper.rb:27:in `aes256_gcm_decrypt&#x27;</span><br><span class="line">app/models/concerns/token_authenticatable_strategies/encrypted.rb:55:in `get_token&#x27;</span><br><span class="line">app/models/concerns/token_authenticatable_strategies/base.rb:27:in `ensure_token&#x27;</span><br><span class="line">app/models/concerns/token_authenticatable_strategies/encrypted.rb:42:in `ensure_token&#x27;</span><br><span class="line">app/models/concerns/token_authenticatable.rb:38:in `block in add_authentication_token_field&#x27;</span><br><span class="line">app/services/application_settings/update_service.rb:18:in `execute&#x27;</span><br><span class="line">app/controllers/admin/application_settings_controller.rb:40:in `update&#x27;</span><br><span class="line">lib/gitlab/i18n.rb:55:in `with_locale&#x27;</span><br><span class="line">lib/gitlab/i18n.rb:61:in `with_user_locale&#x27;</span><br><span class="line">app/controllers/application_controller.rb:420:in `set_locale&#x27;</span><br><span class="line">lib/gitlab/middleware/multipart.rb:103:in `call&#x27;</span><br><span class="line">lib/gitlab/request_profiler/middleware.rb:16:in `call&#x27;</span><br><span class="line">lib/gitlab/middleware/go.rb:19:in `call&#x27;</span><br><span class="line">lib/gitlab/etag_caching/middleware.rb:13:in `call&#x27;</span><br><span class="line">lib/gitlab/middleware/correlation_id.rb:16:in `block in call&#x27;</span><br><span class="line">lib/gitlab/correlation_id.rb:15:in `use_id&#x27;</span><br><span class="line">lib/gitlab/middleware/correlation_id.rb:15:in `call&#x27;</span><br><span class="line">lib/gitlab/middleware/read_only/controller.rb:40:in `call&#x27;</span><br><span class="line">lib/gitlab/middleware/read_only.rb:18:in `call&#x27;</span><br><span class="line">lib/gitlab/middleware/basic_health_check.rb:25:in `call&#x27;</span><br><span class="line">lib/gitlab/request_context.rb:20:in `call&#x27;</span><br><span class="line">lib/gitlab/metrics/requests_rack_middleware.rb:29:in `call&#x27;</span><br><span class="line">lib/gitlab/middleware/release_env.rb:13:in `call&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>看起来是什么加密算法报错了,查了一下找到了这个<a href="https://gitlab.com/gitlab-org/gitlab/-/issues/26171">issue</a></p>
+<p>看起来是gitlab本身的配置出错了.执行一下以下命令</p>
+<figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">gitlab-rails console</span><br><span class="line"></span><br><span class="line">ApplicationSetting.first.delete</span><br><span class="line"></span><br><span class="line">settings = ApplicationSetting.last</span><br><span class="line">==&gt; nil</span><br></pre></td></tr></table></figure>
+<p>最后一步返回的是空,再gitlab-ctl reconfigure重载一下就可以修改成功了</p>
+<h2 id="2-初始化配置"><a href="#2-初始化配置" class="headerlink" title="2.初始化配置"></a>2.初始化配置</h2><p>有没有办法初始化勾选这个配置呢.我找到了这个<a href="https://gitlab.com/gitlab-org/omnibus-gitlab/-/issues/3647">issue</a></p>
+<p>大概意思是有gitlab.rb加”allow_local_requests_from_hooks_and_services”这个配置就行,但是我试了一下不行,不知道是不是版本问题.</p>
+<p>这条路走不通,想了另一种方案,通过api去做.因为我负责的模块本身有接入gitlab4j(gitlab的java sdk),可以在服务启动的时候去确认这个配置去打开这个配置,代码如下</p>
+ <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">@PostConstruct</span><br><span class="line">   public void checkSetting()&#123;</span><br><span class="line">       GitLabApi gitlabApi = gitlabClient.getGitlabApi();</span><br><span class="line">       ApplicationSettings settings;</span><br><span class="line">       try &#123;</span><br><span class="line">           settings = gitlabApi.getApplicationSettingsApi().getApplicationSettings();</span><br><span class="line">           //如果打开了内网屏蔽</span><br><span class="line">           if (!Boolean.parseBoolean(settings.getSetting(ALLOW_LOCAL_REQUESTS).toString()))&#123;</span><br><span class="line">               log.info(&quot;检测到gitlab打开了内网屏蔽，自动关闭&quot;);</span><br><span class="line">               gitlabApi.getApplicationSettingsApi().updateApplicationSetting(ALLOW_LOCAL_REQUESTS,true);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125; catch (GitLabApiException e) &#123;</span><br><span class="line">           log.error(&quot;检查gitlab配置失败&quot;,e);</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br></pre></td></tr></table></figure>
+<p>这样只要我服务启动,配置就会自动打开.</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>gitlab</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>gitlab升级</title>
     <url>/2023/03/28/gitlab%E5%8D%87%E7%BA%A7/</url>
     <content><![CDATA[<h1 id="1-升级路线"><a href="#1-升级路线" class="headerlink" title="1.升级路线"></a>1.升级路线</h1><p>gitlab升级不能一步到位，要一个个版本渐进式升级，根据官方文档选择自己的升级路线。<br>官方文档：<a href="https://docs.gitlab.com/ee/update/index.html#upgrade-paths">https://docs.gitlab.com/ee/update/index.html#upgrade-paths</a><br>根据文档，升级路线为：11.4.3 -&gt; 11.11.8 -&gt; 12.0.12 -&gt; 12.1.17 -&gt; 12.10.14 -&gt; 13.0.14 -&gt; 13.1.11 -&gt; 13.8.8 -&gt; 13.12.15 -&gt; 14.0.12 -&gt; 14.3.6 -&gt; 14.6.2 -&gt; 14.9.5 -&gt; 14.10.5</p>
@@ -80,26 +108,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Hello World</title>
-    <url>/2023/03/28/hello-world/</url>
-    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<span id="more"></span>
-
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-]]></content>
-  </entry>
-  <entry>
     <title>gitlab重置root用户密码</title>
     <url>/2023/03/28/gitlab%E9%87%8D%E7%BD%AEroot%E7%94%A8%E6%88%B7%E5%AF%86%E7%A0%81/</url>
     <content><![CDATA[<h2 id="前提"><a href="#前提" class="headerlink" title="前提"></a>前提</h2><ul>
@@ -146,5 +154,25 @@
       <tags>
         <tag>gitlab</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>Hello World</title>
+    <url>/2023/03/28/hello-world/</url>
+    <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<span id="more"></span>
+
+<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
+<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p>
+<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p>
+<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
+
+<p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
+]]></content>
   </entry>
 </search>
