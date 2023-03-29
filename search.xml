@@ -1,9 +1,90 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>gitlab升级</title>
+    <url>/2023/03/28/gitlab%E5%8D%87%E7%BA%A7/</url>
+    <content><![CDATA[<h1 id="1-升级路线"><a href="#1-升级路线" class="headerlink" title="1.升级路线"></a>1.升级路线</h1><p>gitlab升级不能一步到位，要一个个版本渐进式升级，根据官方文档选择自己的升级路线。<br>官方文档：<a href="https://docs.gitlab.com/ee/update/index.html#upgrade-paths">https://docs.gitlab.com/ee/update/index.html#upgrade-paths</a><br>根据文档，升级路线为：11.4.3 -&gt; 11.11.8 -&gt; 12.0.12 -&gt; 12.1.17 -&gt; 12.10.14 -&gt; 13.0.14 -&gt; 13.1.11 -&gt; 13.8.8 -&gt; 13.12.15 -&gt; 14.0.12 -&gt; 14.3.6 -&gt; 14.6.2 -&gt; 14.9.5 -&gt; 14.10.5</p>
+<span id="more"></span>
+<h2 id="2-准备"><a href="#2-准备" class="headerlink" title="2.准备"></a>2.准备</h2><p>升级路线上所有安装包，容器部署的下载官方镜像文件gitlab&#x2F;gitlab-ce:[version]-ce.0<br><a href="https://packages.gitlab.com/gitlab/gitlab-ce">https://packages.gitlab.com/gitlab/gitlab-ce</a></p>
+<p>升级前务必执行备份操作</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">GitLab 12.2以后:</span><br><span class="line">gitlab-backup create</span><br><span class="line">GitLab 12.1及以前:</span><br><span class="line">gitlab-rake gitlab:backup:create</span><br></pre></td></tr></table></figure>
+
+<p>如果升级过程中出现问题，退回初始版本，执行恢复操作：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">关闭数据库连接服务</span><br><span class="line">gitlab-ctl stop unicorn &amp;&amp; gitlab-ctl stop sidekiq</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>⚠️恢复操作会清空当前gitlab数据</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">cd</span> /opt/gitlab_backup</span><br><span class="line">gitlab-rake gitlab:backup:restore BACKUP=1553965778_2019_03_31_10.7.3       ---<span class="comment">#文件名会自动补全-（注意）</span></span><br></pre></td></tr></table></figure>
+<h2 id="3-升级"><a href="#3-升级" class="headerlink" title="3.升级"></a>3.升级</h2><h3 id="11-4-3-gt-11-11-8"><a href="#11-4-3-gt-11-11-8" class="headerlink" title="11.4.3 -&gt; 11.11.8"></a>11.4.3 -&gt; 11.11.8</h3><p>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq</p>
+<p>根据：<a href="https://docs.gitlab.com/omnibus/update/gitlab_11_changes.html">https://docs.gitlab.com/omnibus/update/gitlab_11_changes.html</a></p>
+<p>11.11.8大版本需要修改 gitlab.rb的2个地方：<br>1、增加 nginx[‘ssl_protocols’] &#x3D; “TLSv1.2”<br>2、旧格式去掉 git_data_dir “&#x2F;data&#x2F;git-data” 增加新格式 git_data_dirs({ “default” &#x3D;&gt; { “path” &#x3D;&gt; “&#x2F;data&#x2F;git-data” } })<br>然后执行：<br>gitlab-ctl reconfigure<br>开始升级：<br>rpm -Uvh gitlab-ce-11.11.8-ce.0.el7.x86_64.rpm</p>
+<p>按提示执行：gitlab-ctl restart postgresql</p>
+<p>gitlab-ctl restart<br>gitlab-ctl status 查看应该正常了。</p>
+<p>查看版本号：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># rpm -qa|grep gitlab</span></span><br><span class="line">gitlab-ce-11.11.8-ce.0.el7.x86_64</span><br><span class="line">[root@gitlab soft]<span class="comment"># cat /opt/gitlab/embedded/service/gitlab-rails/VERSION</span></span><br><span class="line">11.11.8</span><br></pre></td></tr></table></figure>
+
+<h3 id="11-11-8-gt-12-0-12"><a href="#11-11-8-gt-12-0-12" class="headerlink" title="11.11.8 -&gt; 12.0.12"></a>11.11.8 -&gt; 12.0.12</h3><p>记录一下PostgreSQL的版本为9.6:</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">/opt/gitlab/embedded/bin/psql --version</span><br><span class="line">psql (PostgreSQL) 9.6.11</span><br></pre></td></tr></table></figure>
+
+<p>停止数据连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq</p>
+<p>这个版本需要升级prometheus，大概15分钟</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@gitlab ~]<span class="comment"># gitlab-ctl prometheus-upgrade</span></span><br><span class="line">Converting existing data to new format is a time consuming process and can take hours.</span><br><span class="line">If you prefer not to migrate existing data, press Ctrl-C now and re-run the <span class="built_in">command</span> with --skip-data-migration flag.</span><br><span class="line">Waiting <span class="keyword">for</span> 30 seconds <span class="keyword">for</span> input.</span><br></pre></td></tr></table></figure>
+<p>开始升级</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># rpm -Uvh gitlab-ce-12.0.12-ce.0.el7.x86_64.rpm</span></span><br><span class="line"><span class="comment">#查看版本号</span></span><br><span class="line">[root@gitlab soft]<span class="comment"># rpm -qa|grep gitlab</span></span><br><span class="line">gitlab-ce-12.0.12-ce.0.el7.x86_64</span><br><span class="line">[root@gitlab soft]<span class="comment"># cat /opt/gitlab/embedded/service/gitlab-rails/VERSION</span></span><br><span class="line">12.0.12</span><br></pre></td></tr></table></figure>
+<h3 id="12-0-12-gt-12-1-17"><a href="#12-0-12-gt-12-1-17" class="headerlink" title="12.0.12 -&gt; 12.1.17"></a>12.0.12 -&gt; 12.1.17</h3><p>查看PostgreSQL的版本：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># /opt/gitlab/embedded/bin/psql --version</span></span><br><span class="line">psql (PostgreSQL) 10.7</span><br></pre></td></tr></table></figure>
+
+<p>停止数据连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq<br>gitlab-ctl stop nginx<br>开始升级：<br>rpm -Uvh gitlab-ce-12.1.17-ce.0.el7.x86_64.rpm</p>
+<p>查看版本：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># rpm -qa|grep gitlab</span></span><br><span class="line">gitlab-ce-12.1.17-ce.0.el7.x86_64</span><br><span class="line">[root@gitlab soft]<span class="comment"># cat /opt/gitlab/embedded/service/gitlab-rails/VERSION</span></span><br><span class="line">12.1.17</span><br></pre></td></tr></table></figure>
+<h3 id="12-1-17-gt-12-10-14"><a href="#12-1-17-gt-12-10-14" class="headerlink" title="12.1.17 -&gt; 12.10.14"></a>12.1.17 -&gt; 12.10.14</h3><p>查看当前PostgreSQL的版本：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># /opt/gitlab/embedded/bin/psql --version</span></span><br><span class="line">psql (PostgreSQL) 10.7</span><br></pre></td></tr></table></figure>
+<p>停止数据库连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq<br>gitlab-ctl stop nginx<br>这个版本的PostgreSQL会自动升级到11.x<br>开始升级：<br>rpm -Uvh gitlab-ce-12.10.14-ce.0.el7.x86_64.rpm<br>gitlab-ctl restart<br>升级后的PostgreSQL 的版本：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># /opt/gitlab/embedded/bin/psql --version</span></span><br><span class="line">psql (PostgreSQL) 11.7</span><br></pre></td></tr></table></figure>
+
+<h3 id="12-10-14-gt-13-0-14"><a href="#12-10-14-gt-13-0-14" class="headerlink" title="12.10.14 -&gt; 13.0.14"></a>12.10.14 -&gt; 13.0.14</h3><p>此版本变动如下：<br>1、Puma代替unicorn作为默认web server<br>2、PostgreSQL最低版本提升到11。</p>
+<p>停止数据连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq<br>gitlab-ctl stop nginx<br>开始升级：<br>rpm -Uvh gitlab-ce-13.0.14-ce.0.el7.x86_64.rpm<br>gitlab-ctl restart</p>
+<p>查看版本：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># cat /opt/gitlab/embedded/service/gitlab-rails/VERSION</span></span><br><span class="line">13.0.14</span><br><span class="line">[root@gitlab ~]<span class="comment"># rpm -qa|grep gitlab</span></span><br><span class="line">gitlab-ce-13.0.14-ce.0.el7.x86_64</span><br></pre></td></tr></table></figure>
+
+<p>运行检查脚本：<br>gitlab-rake gitlab:check SANITIZE&#x3D;true</p>
+<p>一切正常，Git version显示为2.26.2</p>
+<h3 id="13-0-14-gt-13-1-11"><a href="#13-0-14-gt-13-1-11" class="headerlink" title="13.0.14 -&gt; 13.1.11"></a>13.0.14 -&gt; 13.1.11</h3><p>关闭数据库连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>开始升级：<br>rpm -Uvh gitlab-ce-13.1.11-ce.0.el7.x86_64.rpm</p>
+<p>执行检查脚本：<br>gitlab-rake gitlab:check SANITIZE&#x3D;true</p>
+<h3 id="13-1-11-gt-13-8-8"><a href="#13-1-11-gt-13-8-8" class="headerlink" title="13.1.11 -&gt; 13.8.8"></a>13.1.11 -&gt; 13.8.8</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq<br>rpm -Uvh gitlab-ce-13.8.8-ce.0.el7.x86_64.rpm<br>安装完成后<br>gitlab-rake gitlab:check SANITIZE&#x3D;true</p>
+<h3 id="13-8-8-gt-13-12-15"><a href="#13-8-8-gt-13-12-15" class="headerlink" title="13.8.8 -&gt; 13.12.15"></a>13.8.8 -&gt; 13.12.15</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-13.12.15-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;bin&#x2F;psql –version<br>psql (PostgreSQL) 12.6<br>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>13.12.15</p>
+<h3 id="13-12-15-gt-14-0-12"><a href="#13-12-15-gt-14-0-12" class="headerlink" title="13.12.15 -&gt; 14.0.12"></a>13.12.15 -&gt; 14.0.12</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.0.12-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.0.12</p>
+<h3 id="14-0-12-gt-14-3-6"><a href="#14-0-12-gt-14-3-6" class="headerlink" title="14.0.12 -&gt; 14.3.6"></a>14.0.12 -&gt; 14.3.6</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.3.6-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.3.6</p>
+<h3 id="14-3-6-gt-14-6-2"><a href="#14-3-6-gt-14-6-2" class="headerlink" title="14.3.6 -&gt; 14.6.2"></a>14.3.6 -&gt; 14.6.2</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.6.2-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.6.2</p>
+<h3 id="14-6-2-gt-14-9-5"><a href="#14-6-2-gt-14-9-5" class="headerlink" title="14.6.2 -&gt; 14.9.5"></a>14.6.2 -&gt; 14.9.5</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.9.5-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.9.5</p>
+<h3 id="14-9-5-gt-14-10-5"><a href="#14-9-5-gt-14-10-5" class="headerlink" title="14.9.5 -&gt; 14.10.5"></a>14.9.5 -&gt; 14.10.5</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.10.5-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.10.5</p>
+]]></content>
+      <categories>
+        <category>工具</category>
+      </categories>
+      <tags>
+        <tag>gitlab</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Hello World</title>
-    <url>/2023/03/27/hello-world/</url>
+    <url>/2023/03/28/hello-world/</url>
     <content><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
+<span id="more"></span>
+
 <h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
 
 <p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p>
@@ -19,15 +100,51 @@
 ]]></content>
   </entry>
   <entry>
-    <title>牛啊</title>
-    <url>/2023/03/27/%E7%89%9B%E5%95%8A/</url>
-    <content><![CDATA[<h2 id="我怎么样"><a href="#我怎么样" class="headerlink" title="我怎么样"></a>我怎么样</h2>]]></content>
+    <title>gitlab重置root用户密码</title>
+    <url>/2023/03/28/gitlab%E9%87%8D%E7%BD%AEroot%E7%94%A8%E6%88%B7%E5%AF%86%E7%A0%81/</url>
+    <content><![CDATA[<h2 id="前提"><a href="#前提" class="headerlink" title="前提"></a>前提</h2><ul>
+<li>需要知道gitlab账号的用户名，id，或者邮箱其一</li>
+<li>需要gitlab实例机器的管理员权限账号</li>
+<li>新密码必须符合<a href="https://docs.gitlab.com/ee/user/profile/user_passwords.html#password-requirements">gitlab密码规则</a></li>
+</ul>
+<span id="more"></span>
+<h2 id="操作"><a href="#操作" class="headerlink" title="操作"></a>操作</h2><ol>
+<li>打开Rails Console <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">sudo gitlab-rails console</span><br></pre></td></tr></table></figure></li>
+<li>找到gitlab用户<ul>
+<li>通过用户名 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">user = User.find_by_username <span class="string">&#x27;exampleuser&#x27;</span></span><br></pre></td></tr></table></figure></li>
+<li>通过id <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">user = User.find(123)</span><br></pre></td></tr></table></figure></li>
+<li>通过邮箱 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">user = User.find_by(email: <span class="string">&#x27;user@example.com&#x27;</span>)</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+<li>重置密码<br> 重置为随机密码： <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">   new_password = ::User.random_password</span><br><span class="line">user.password = new_password</span><br><span class="line">user.password_confirmation = new_password</span><br></pre></td></tr></table></figure>
+ 重置为自定义密码： <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">new_password = <span class="string">&#x27;examplepassword&#x27;</span></span><br><span class="line">user.password = new_password</span><br><span class="line">user.password_confirmation = new_password</span><br></pre></td></tr></table></figure></li>
+<li>可以是否邮件通知用户 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">user.send_only_admin_changed_your_password_notification!</span><br></pre></td></tr></table></figure></li>
+<li>保存用户 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">user.save!</span><br></pre></td></tr></table></figure></li>
+<li>退出控制台 <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="built_in">exit</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="重置root账号密码"><a href="#重置root账号密码" class="headerlink" title="重置root账号密码"></a>重置root账号密码</h2><p>如果要重置root账号的密码</p>
+<ul>
+<li>如果root用户名没改过，直接通过root查找</li>
+<li>如果用户名修改了，并且不知道新的用户名，通过id为1查找，一般root账号id就是1</li>
+</ul>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><ul>
+<li>修改不生效<br>  可能是因为打开了邮箱验证，可以通过rail console关闭。  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">user = User.find(1)</span><br><span class="line">user.skip_reconfirmation!</span><br></pre></td></tr></table></figure></li>
+<li>没有root账号<br>  遇到过部署的gitlab没有root账号的情况,通过手动将其他用户设为root账号解决<ol>
+<li>查看用户属性  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">u = User.find(1)</span><br><span class="line">pp u.attributes</span><br><span class="line"></span><br><span class="line">irb(main):003:0&gt; pp u.attributes</span><br><span class="line">&#123;<span class="string">&quot;id&quot;</span>=&gt;1,</span><br><span class="line"> <span class="string">&quot;email&quot;</span>=&gt;<span class="string">&quot;admin@example.com&quot;</span>,</span><br><span class="line"> <span class="string">&quot;admin&quot;</span>=&gt;<span class="literal">false</span>, <span class="comment">##这个属性表示是否为管理员</span></span><br><span class="line">	...</span><br><span class="line"> <span class="string">&quot;group_view&quot;</span>=&gt;nil,</span><br><span class="line"> <span class="string">&quot;managing_group_id&quot;</span>=&gt;nil,</span><br><span class="line"> <span class="string">&quot;user_type&quot;</span>=&gt;<span class="string">&quot;human&quot;</span>,</span><br><span class="line"> <span class="string">&quot;static_object_token_encrypted&quot;</span>=&gt;nil,</span><br><span class="line"> <span class="string">&quot;otp_secret_expires_at&quot;</span>=&gt;nil,</span><br><span class="line"> <span class="string">&quot;otp_secret&quot;</span>=&gt;nil&#125;	</span><br></pre></td></tr></table></figure></li>
+<li>   设置为管理员  <figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">u.admin = <span class="literal">true</span></span><br><span class="line">u.save!</span><br><span class="line"><span class="built_in">exit</span></span><br></pre></td></tr></table></figure>
+  <em>也可以通过这种方式修改用户的其他属性</em></li>
+</ol>
+</li>
+</ul>
+<blockquote>
+<p><a href="https://docs.gitlab.com/ee/security/reset_user_password.html">gitlab官方文档</a></p>
+</blockquote>
+]]></content>
       <categories>
-        <category>java</category>
-        <category>杂</category>
+        <category>工具</category>
       </categories>
       <tags>
-        <tag>java</tag>
+        <tag>gitlab</tag>
       </tags>
   </entry>
 </search>

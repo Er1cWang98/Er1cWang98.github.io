@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 6.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/css/all.min.css" integrity="sha256-/4UQcSmErDzPCMAiuOiWPVVsNN2s3ZY/NsmXNcj0IFc=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.css" integrity="sha256-Vzbj7sDDS/woiFS3uNKo8eIuni59rjyNGtXfstRzStA=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"er1cwang98.github.io","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.15.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":"mac"},"bookmark":{"enable":true,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":true,"pangu":true,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":true,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":true,"transition":{"menu_item":null,"post_block":"fadeIn","post_header":null,"post_body":null,"coll_header":null,"sidebar":"fadeInDown"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":-1,"unescape":true,"preload":false}}</script><script src="/js/config.js"></script>
+
+    <meta name="description" content="1.升级路线gitlab升级不能一步到位，要一个个版本渐进式升级，根据官方文档选择自己的升级路线。官方文档：https:&#x2F;&#x2F;docs.gitlab.com&#x2F;ee&#x2F;update&#x2F;index.html#upgrade-paths根据文档，升级路线为：11.4.3 -&gt; 11.11.8 -&gt; 12.0.12 -&gt; 12.1.17 -&gt; 12.10.14 -&gt; 13.0.14">
+<meta property="og:type" content="article">
+<meta property="og:title" content="gitlab升级">
+<meta property="og:url" content="http://er1cwang98.github.io/2023/03/28/gitlab%E5%8D%87%E7%BA%A7/index.html">
+<meta property="og:site_name" content="Er1c的个人博客">
+<meta property="og:description" content="1.升级路线gitlab升级不能一步到位，要一个个版本渐进式升级，根据官方文档选择自己的升级路线。官方文档：https:&#x2F;&#x2F;docs.gitlab.com&#x2F;ee&#x2F;update&#x2F;index.html#upgrade-paths根据文档，升级路线为：11.4.3 -&gt; 11.11.8 -&gt; 12.0.12 -&gt; 12.1.17 -&gt; 12.10.14 -&gt; 13.0.14">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2023-03-28T15:24:42.000Z">
+<meta property="article:modified_time" content="2023-03-28T15:37:25.499Z">
+<meta property="article:author" content="Er1c">
+<meta property="article:tag" content="gitlab">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://er1cwang98.github.io/2023/03/28/gitlab%E5%8D%87%E7%BA%A7/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"http://er1cwang98.github.io/2023/03/28/gitlab%E5%8D%87%E7%BA%A7/","path":"2023/03/28/gitlab升级/","title":"gitlab升级"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>gitlab升级 | Er1c的个人博客</title>
+  
+
+
+
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Er1c的个人博客</p>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">财富自由 1/100</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">1</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">1</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">3</span></a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close" role="button">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#1-%E5%8D%87%E7%BA%A7%E8%B7%AF%E7%BA%BF"><span class="nav-number">1.</span> <span class="nav-text">1.升级路线</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#2-%E5%87%86%E5%A4%87"><span class="nav-number">1.1.</span> <span class="nav-text">2.准备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-%E5%8D%87%E7%BA%A7"><span class="nav-number">1.2.</span> <span class="nav-text">3.升级</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#11-4-3-gt-11-11-8"><span class="nav-number">1.2.1.</span> <span class="nav-text">11.4.3 -&gt; 11.11.8</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#11-11-8-gt-12-0-12"><span class="nav-number">1.2.2.</span> <span class="nav-text">11.11.8 -&gt; 12.0.12</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#12-0-12-gt-12-1-17"><span class="nav-number">1.2.3.</span> <span class="nav-text">12.0.12 -&gt; 12.1.17</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#12-1-17-gt-12-10-14"><span class="nav-number">1.2.4.</span> <span class="nav-text">12.1.17 -&gt; 12.10.14</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#12-10-14-gt-13-0-14"><span class="nav-number">1.2.5.</span> <span class="nav-text">12.10.14 -&gt; 13.0.14</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#13-0-14-gt-13-1-11"><span class="nav-number">1.2.6.</span> <span class="nav-text">13.0.14 -&gt; 13.1.11</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#13-1-11-gt-13-8-8"><span class="nav-number">1.2.7.</span> <span class="nav-text">13.1.11 -&gt; 13.8.8</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#13-8-8-gt-13-12-15"><span class="nav-number">1.2.8.</span> <span class="nav-text">13.8.8 -&gt; 13.12.15</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#13-12-15-gt-14-0-12"><span class="nav-number">1.2.9.</span> <span class="nav-text">13.12.15 -&gt; 14.0.12</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-0-12-gt-14-3-6"><span class="nav-number">1.2.10.</span> <span class="nav-text">14.0.12 -&gt; 14.3.6</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-3-6-gt-14-6-2"><span class="nav-number">1.2.11.</span> <span class="nav-text">14.3.6 -&gt; 14.6.2</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-6-2-gt-14-9-5"><span class="nav-number">1.2.12.</span> <span class="nav-text">14.6.2 -&gt; 14.9.5</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#14-9-5-gt-14-10-5"><span class="nav-number">1.2.13.</span> <span class="nav-text">14.9.5 -&gt; 14.10.5</span></a></li></ol></li></ol></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Er1c"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">Er1c</p>
+  <div class="site-description" itemprop="description">一些java相关</div>
+</div>
+  <div class="links-of-author animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/Er1cWang98" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;Er1cWang98" rel="noopener me" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:877140101@qq.com" title="E-Mail → mailto:877140101@qq.com" rel="noopener me" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://er1cwang98.github.io/2023/03/28/gitlab%E5%8D%87%E7%BA%A7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="Er1c">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Er1c的个人博客">
+      <meta itemprop="description" content="一些java相关">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="gitlab升级 | Er1c的个人博客">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          gitlab升级
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2023-03-28 23:24:42 / 修改时间：23:37:25" itemprop="dateCreated datePublished" datetime="2023-03-28T23:24:42+08:00">2023-03-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv">
+      <span class="post-meta-item-icon">
+        <i class="far fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h1 id="1-升级路线"><a href="#1-升级路线" class="headerlink" title="1.升级路线"></a>1.升级路线</h1><p>gitlab升级不能一步到位，要一个个版本渐进式升级，根据官方文档选择自己的升级路线。<br>官方文档：<a target="_blank" rel="noopener" href="https://docs.gitlab.com/ee/update/index.html#upgrade-paths">https://docs.gitlab.com/ee/update/index.html#upgrade-paths</a><br>根据文档，升级路线为：11.4.3 -&gt; 11.11.8 -&gt; 12.0.12 -&gt; 12.1.17 -&gt; 12.10.14 -&gt; 13.0.14 -&gt; 13.1.11 -&gt; 13.8.8 -&gt; 13.12.15 -&gt; 14.0.12 -&gt; 14.3.6 -&gt; 14.6.2 -&gt; 14.9.5 -&gt; 14.10.5</p>
+<span id="more"></span>
+<h2 id="2-准备"><a href="#2-准备" class="headerlink" title="2.准备"></a>2.准备</h2><p>升级路线上所有安装包，容器部署的下载官方镜像文件gitlab&#x2F;gitlab-ce:[version]-ce.0<br><a target="_blank" rel="noopener" href="https://packages.gitlab.com/gitlab/gitlab-ce">https://packages.gitlab.com/gitlab/gitlab-ce</a></p>
+<p>升级前务必执行备份操作</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">GitLab 12.2以后:</span><br><span class="line">gitlab-backup create</span><br><span class="line">GitLab 12.1及以前:</span><br><span class="line">gitlab-rake gitlab:backup:create</span><br></pre></td></tr></table></figure>
+
+<p>如果升级过程中出现问题，退回初始版本，执行恢复操作：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">关闭数据库连接服务</span><br><span class="line">gitlab-ctl stop unicorn &amp;&amp; gitlab-ctl stop sidekiq</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>⚠️恢复操作会清空当前gitlab数据</p>
+</blockquote>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">cd</span> /opt/gitlab_backup</span><br><span class="line">gitlab-rake gitlab:backup:restore BACKUP=1553965778_2019_03_31_10.7.3       ---<span class="comment">#文件名会自动补全-（注意）</span></span><br></pre></td></tr></table></figure>
+<h2 id="3-升级"><a href="#3-升级" class="headerlink" title="3.升级"></a>3.升级</h2><h3 id="11-4-3-gt-11-11-8"><a href="#11-4-3-gt-11-11-8" class="headerlink" title="11.4.3 -&gt; 11.11.8"></a>11.4.3 -&gt; 11.11.8</h3><p>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq</p>
+<p>根据：<a target="_blank" rel="noopener" href="https://docs.gitlab.com/omnibus/update/gitlab_11_changes.html">https://docs.gitlab.com/omnibus/update/gitlab_11_changes.html</a></p>
+<p>11.11.8大版本需要修改 gitlab.rb的2个地方：<br>1、增加 nginx[‘ssl_protocols’] &#x3D; “TLSv1.2”<br>2、旧格式去掉 git_data_dir “&#x2F;data&#x2F;git-data” 增加新格式 git_data_dirs({ “default” &#x3D;&gt; { “path” &#x3D;&gt; “&#x2F;data&#x2F;git-data” } })<br>然后执行：<br>gitlab-ctl reconfigure<br>开始升级：<br>rpm -Uvh gitlab-ce-11.11.8-ce.0.el7.x86_64.rpm</p>
+<p>按提示执行：gitlab-ctl restart postgresql</p>
+<p>gitlab-ctl restart<br>gitlab-ctl status 查看应该正常了。</p>
+<p>查看版本号：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># rpm -qa|grep gitlab</span></span><br><span class="line">gitlab-ce-11.11.8-ce.0.el7.x86_64</span><br><span class="line">[root@gitlab soft]<span class="comment"># cat /opt/gitlab/embedded/service/gitlab-rails/VERSION</span></span><br><span class="line">11.11.8</span><br></pre></td></tr></table></figure>
+
+<h3 id="11-11-8-gt-12-0-12"><a href="#11-11-8-gt-12-0-12" class="headerlink" title="11.11.8 -&gt; 12.0.12"></a>11.11.8 -&gt; 12.0.12</h3><p>记录一下PostgreSQL的版本为9.6:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">/opt/gitlab/embedded/bin/psql --version</span><br><span class="line">psql (PostgreSQL) 9.6.11</span><br></pre></td></tr></table></figure>
+
+<p>停止数据连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq</p>
+<p>这个版本需要升级prometheus，大概15分钟</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@gitlab ~]<span class="comment"># gitlab-ctl prometheus-upgrade</span></span><br><span class="line">Converting existing data to new format is a time consuming process and can take hours.</span><br><span class="line">If you prefer not to migrate existing data, press Ctrl-C now and re-run the <span class="built_in">command</span> with --skip-data-migration flag.</span><br><span class="line">Waiting <span class="keyword">for</span> 30 seconds <span class="keyword">for</span> input.</span><br></pre></td></tr></table></figure>
+<p>开始升级</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># rpm -Uvh gitlab-ce-12.0.12-ce.0.el7.x86_64.rpm</span></span><br><span class="line"><span class="comment">#查看版本号</span></span><br><span class="line">[root@gitlab soft]<span class="comment"># rpm -qa|grep gitlab</span></span><br><span class="line">gitlab-ce-12.0.12-ce.0.el7.x86_64</span><br><span class="line">[root@gitlab soft]<span class="comment"># cat /opt/gitlab/embedded/service/gitlab-rails/VERSION</span></span><br><span class="line">12.0.12</span><br></pre></td></tr></table></figure>
+<h3 id="12-0-12-gt-12-1-17"><a href="#12-0-12-gt-12-1-17" class="headerlink" title="12.0.12 -&gt; 12.1.17"></a>12.0.12 -&gt; 12.1.17</h3><p>查看PostgreSQL的版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># /opt/gitlab/embedded/bin/psql --version</span></span><br><span class="line">psql (PostgreSQL) 10.7</span><br></pre></td></tr></table></figure>
+
+<p>停止数据连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq<br>gitlab-ctl stop nginx<br>开始升级：<br>rpm -Uvh gitlab-ce-12.1.17-ce.0.el7.x86_64.rpm</p>
+<p>查看版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># rpm -qa|grep gitlab</span></span><br><span class="line">gitlab-ce-12.1.17-ce.0.el7.x86_64</span><br><span class="line">[root@gitlab soft]<span class="comment"># cat /opt/gitlab/embedded/service/gitlab-rails/VERSION</span></span><br><span class="line">12.1.17</span><br></pre></td></tr></table></figure>
+<h3 id="12-1-17-gt-12-10-14"><a href="#12-1-17-gt-12-10-14" class="headerlink" title="12.1.17 -&gt; 12.10.14"></a>12.1.17 -&gt; 12.10.14</h3><p>查看当前PostgreSQL的版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># /opt/gitlab/embedded/bin/psql --version</span></span><br><span class="line">psql (PostgreSQL) 10.7</span><br></pre></td></tr></table></figure>
+<p>停止数据库连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq<br>gitlab-ctl stop nginx<br>这个版本的PostgreSQL会自动升级到11.x<br>开始升级：<br>rpm -Uvh gitlab-ce-12.10.14-ce.0.el7.x86_64.rpm<br>gitlab-ctl restart<br>升级后的PostgreSQL 的版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># /opt/gitlab/embedded/bin/psql --version</span></span><br><span class="line">psql (PostgreSQL) 11.7</span><br></pre></td></tr></table></figure>
+
+<h3 id="12-10-14-gt-13-0-14"><a href="#12-10-14-gt-13-0-14" class="headerlink" title="12.10.14 -&gt; 13.0.14"></a>12.10.14 -&gt; 13.0.14</h3><p>此版本变动如下：<br>1、Puma代替unicorn作为默认web server<br>2、PostgreSQL最低版本提升到11。</p>
+<p>停止数据连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop sidekiq<br>gitlab-ctl stop nginx<br>开始升级：<br>rpm -Uvh gitlab-ce-13.0.14-ce.0.el7.x86_64.rpm<br>gitlab-ctl restart</p>
+<p>查看版本：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@gitlab soft]<span class="comment"># cat /opt/gitlab/embedded/service/gitlab-rails/VERSION</span></span><br><span class="line">13.0.14</span><br><span class="line">[root@gitlab ~]<span class="comment"># rpm -qa|grep gitlab</span></span><br><span class="line">gitlab-ce-13.0.14-ce.0.el7.x86_64</span><br></pre></td></tr></table></figure>
+
+<p>运行检查脚本：<br>gitlab-rake gitlab:check SANITIZE&#x3D;true</p>
+<p>一切正常，Git version显示为2.26.2</p>
+<h3 id="13-0-14-gt-13-1-11"><a href="#13-0-14-gt-13-1-11" class="headerlink" title="13.0.14 -&gt; 13.1.11"></a>13.0.14 -&gt; 13.1.11</h3><p>关闭数据库连接服务：<br>gitlab-ctl stop unicorn<br>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>开始升级：<br>rpm -Uvh gitlab-ce-13.1.11-ce.0.el7.x86_64.rpm</p>
+<p>执行检查脚本：<br>gitlab-rake gitlab:check SANITIZE&#x3D;true</p>
+<h3 id="13-1-11-gt-13-8-8"><a href="#13-1-11-gt-13-8-8" class="headerlink" title="13.1.11 -&gt; 13.8.8"></a>13.1.11 -&gt; 13.8.8</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq<br>rpm -Uvh gitlab-ce-13.8.8-ce.0.el7.x86_64.rpm<br>安装完成后<br>gitlab-rake gitlab:check SANITIZE&#x3D;true</p>
+<h3 id="13-8-8-gt-13-12-15"><a href="#13-8-8-gt-13-12-15" class="headerlink" title="13.8.8 -&gt; 13.12.15"></a>13.8.8 -&gt; 13.12.15</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-13.12.15-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;bin&#x2F;psql –version<br>psql (PostgreSQL) 12.6<br>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>13.12.15</p>
+<h3 id="13-12-15-gt-14-0-12"><a href="#13-12-15-gt-14-0-12" class="headerlink" title="13.12.15 -&gt; 14.0.12"></a>13.12.15 -&gt; 14.0.12</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.0.12-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.0.12</p>
+<h3 id="14-0-12-gt-14-3-6"><a href="#14-0-12-gt-14-3-6" class="headerlink" title="14.0.12 -&gt; 14.3.6"></a>14.0.12 -&gt; 14.3.6</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.3.6-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.3.6</p>
+<h3 id="14-3-6-gt-14-6-2"><a href="#14-3-6-gt-14-6-2" class="headerlink" title="14.3.6 -&gt; 14.6.2"></a>14.3.6 -&gt; 14.6.2</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.6.2-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.6.2</p>
+<h3 id="14-6-2-gt-14-9-5"><a href="#14-6-2-gt-14-9-5" class="headerlink" title="14.6.2 -&gt; 14.9.5"></a>14.6.2 -&gt; 14.9.5</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.9.5-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.9.5</p>
+<h3 id="14-9-5-gt-14-10-5"><a href="#14-9-5-gt-14-10-5" class="headerlink" title="14.9.5 -&gt; 14.10.5"></a>14.9.5 -&gt; 14.10.5</h3><p>gitlab-ctl stop puma<br>gitlab-ctl stop sidekiq</p>
+<p>rpm -Uvh gitlab-ce-14.10.5-ce.0.el7.x86_64.rpm</p>
+<p>[root@gitlab soft]# cat &#x2F;opt&#x2F;gitlab&#x2F;embedded&#x2F;service&#x2F;gitlab-rails&#x2F;VERSION<br>14.10.5</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          
+
+<div class="post-copyright">
+<ul>
+  <li class="post-copyright-author">
+      <strong>本文作者： </strong>Er1c
+  </li>
+  <li class="post-copyright-link">
+      <strong>本文链接：</strong>
+      <a href="http://er1cwang98.github.io/2023/03/28/gitlab%E5%8D%87%E7%BA%A7/" title="gitlab升级">http://er1cwang98.github.io/2023/03/28/gitlab升级/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>版权声明： </strong>本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fab fa-fw fa-creative-commons"></i>BY-NC-SA</a> 许可协议。转载请注明出处！
+  </li>
+</ul>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/gitlab/" rel="tag"># gitlab</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/2023/03/28/gitlab%E9%87%8D%E7%BD%AEroot%E7%94%A8%E6%88%B7%E5%AF%86%E7%A0%81/" rel="next" title="gitlab重置root用户密码">
+                  gitlab重置root用户密码 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments gitalk-container"></div>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Er1c</span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js" integrity="sha256-pvPw+upLPUjgMXY0G+8O0xUf+/Im1MZjXxxgOcBQBXU=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js" integrity="sha256-yt2kYMy0w8AbtF89WXb2P1rfjcP/HTHLT7097U8Y5b8=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lozad.js/1.16.0/lozad.min.js" integrity="sha256-mOFREFhqmHeQbXpK2lp4nA3qooVgACfh88fpJftLBbc=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pangu/4.0.7/pangu.min.js" integrity="sha256-j+yj56cdEY2CwkVtGyz18fNybFGpMGJ8JxG3GSyO2+I=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script><script src="/js/bookmark.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-generator-searchdb/1.4.1/search.js" integrity="sha256-1kfA5uHPf65M5cphT2dvymhkuyHPQp5A53EGZOnOLmc=" crossorigin="anonymous"></script>
+<script src="/js/third-party/search/local-search.js"></script>
+
+
+  <script class="next-config" data-name="mermaid" type="application/json">{"enable":true,"theme":{"light":"neutral","dark":"dark"},"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mermaid/9.4.0/mermaid.min.js","integrity":"sha256-3JloMMI/ZQx6ryuhhZTsQJQmGAkXeni6PkshX7UUO2s="}}</script>
+  <script src="/js/third-party/tags/mermaid.js"></script>
+
+  <script src="/js/third-party/fancybox.js"></script>
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.css" integrity="sha256-AJnUHL7dBv6PGaeyPQJcgQPDjt/Hn/PvYZde1iqfp8U=" crossorigin="anonymous">
+
+<script class="next-config" data-name="gitalk" type="application/json">{"enable":true,"github_id":"Er1cWang98","repo":"Er1cWang98.github.io","client_id":"90f4c0d087219ec1a097","client_secret":"fa0e27eba02775f2f517e9d51d26d0450c6c5983","admin_user":"Er1cWang98","distraction_free_mode":true,"proxy":"https://cors-anywhere.azm.workers.dev/https://github.com/login/oauth/access_token","language":null,"js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/gitalk/1.8.0/gitalk.min.js","integrity":"sha256-MVK9MGD/XJaGyIghSVrONSnoXoGh3IFxLw0zfvzpxR4="},"path_md5":"1de984888dd357ca61a6b80ee54987ec"}</script>
+<script src="/js/third-party/comments/gitalk.js"></script>
+
+</body>
+</html>
